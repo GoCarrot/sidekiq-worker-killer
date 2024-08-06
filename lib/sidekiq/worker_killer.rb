@@ -106,7 +106,22 @@ class Sidekiq::WorkerKiller
     wait_job_finish_in_grace_time
 
     warn "stopping #{identity}"
-    sidekiq_process.stop!
+    tries = 0
+    loop do
+      process = sidekiq_process
+      if process
+        sidekiq_process.stop!
+        break
+      elsif tries >= @shutdown_wait
+        warn "could not find worker with identity #{identity} within #{tries} seconds, falling back to sigterm"
+        ::Process.kill('SIGTERM', ::Process.pid)
+        break
+      else
+        tries += 1
+        warn "could not find worker with identity #{identity}, retrying..."
+        sleep 1
+      end
+    end
 
     warn "waiting #{@shutdown_wait} seconds before sending " \
           "#{@kill_signal} to #{identity}"
@@ -128,6 +143,12 @@ class Sidekiq::WorkerKiller
   end
 
   def jobs_finished?
+    process = sidekiq_process
+    if sidekiq_process.nil?
+      warn "could not find worker with identity #{identity}, assuming jobs not finished"
+      return false
+    end
+
     sidekiq_process.stopping? && sidekiq_process["busy"] == 0
   end
 
