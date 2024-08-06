@@ -159,7 +159,7 @@ class Sidekiq::WorkerKiller
   def sidekiq_process
     Sidekiq::ProcessSet.new.find do |process|
       process["identity"] == identity
-    end || raise("No sidekiq worker with identity #{identity} found")
+    end
   end
 
   def identity
