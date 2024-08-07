@@ -110,7 +110,7 @@ class Sidekiq::WorkerKiller
     loop do
       process = sidekiq_process
       if process
-        sidekiq_process.stop!
+        process.stop!
         break
       elsif tries >= @shutdown_wait
         warn "could not find worker with identity #{identity} within #{tries} seconds, falling back to sigterm"
@@ -144,12 +144,12 @@ class Sidekiq::WorkerKiller
 
   def jobs_finished?
     process = sidekiq_process
-    if sidekiq_process.nil?
+    if process.nil?
       warn "could not find worker with identity #{identity}, assuming jobs not finished"
       return false
     end
 
-    sidekiq_process.stopping? && sidekiq_process["busy"] == 0
+    process.stopping? && process["busy"] == 0
   end
 
   def current_rss
