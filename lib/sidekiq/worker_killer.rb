@@ -88,6 +88,7 @@ class Sidekiq::WorkerKiller
   end
 
   def request_shutdown
+    ::Process.kill('TSTP', ::Process.pid)
     # In another thread to allow underlying job to finish
     Thread.new do
       # Only if another thread is not already
